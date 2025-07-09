@@ -41,14 +41,13 @@
 ```
 API  (ASP.NET)  ← composition-root
 │
-├─ Application            (MediatR commands / queries, behaviors)
+├─ Application            
 │   ├─ Interfaces         e.g., IPaymentService
 │   └─ Validators         FluentValidation rules
 │
 ├─ Domain
 │   ├─ Repositories       IOrderRepository, IMenuItemRepository
-│   ├─ Value Objects      Money, Address
-│   └─ Domain Events      OrderPlaced, OrderStatusChanged …
+│   └─ Value Objects      Money, Address
 │
 ├─ Infrastructure
 │   ├─ Persistence        EF Core
@@ -66,17 +65,17 @@ See `docs/architecture.drawio` for the full component & sequence diagrams.
 
 ### 3.1 Architectural Explanation & Trade-Offs
 
-| Decision                                                                    | Rationale                                                                                         | Trade-Off |
-|-----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|-----------|
-| **Clean Architecture layers** (API → Application → Domain → Infrastructure) | Maximises maintainability and testability; outer rings can be swapped without breaking core logic. | Extra boilerplate, especially for small teams; more projects to navigate. |
-| **EF Core + SQL Server**                                                    | Strong LINQ support; migrations in-repo.                                                          | Vertical scaling only until sharding or read replicas added. |
-| **JWT Bearer & Role Policies**                                              | Stateless auth (no session store); simple RBAC mapping.                                           | Token revocation requires additional infrastructure (e.g., blacklist cache). |
-| **FluentValidation** | Declarative, testable rules; decoupled from controllers. | Duplicate rules if client-side validation is later required. |
-| **Stubbed payment gateways**                                                | Keeps repository runnable without secrets; demonstrates Strategy pattern.                         | Not production-ready; no real PSP error scenarios. |
-| **Single bounded context** (monolith)                                       | Fast to develop and demo; easier local Docker stack.                                              | Limits horizontal scaling; harder to split later than starting modular. |
+| Decision                                                                    | Rationale                                                                                         | Trade-Off                                                                        |
+|-----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| **Clean Architecture layers** (API → Application → Domain → Infrastructure) | Maximises maintainability and testability; outer rings can be swapped without breaking core logic. | Extra boilerplate, especially for small teams; more projects to navigate.        |
+| **EF Core + SQL Server**                                                    | Strong LINQ support; migrations in-repo.                                                          | Can be missed in hand-written SQL and cause inconsistent reads.                  |
+| **JWT Bearer & Role Policies**                                              | Stateless auth (no session store); simple RBAC mapping.                                           | More moving parts (refresh endpoint, rotation logic).                            |
+| **FluentValidation** | Declarative, testable rules; decoupled from controllers. | Duplicate rules if client-side validation is later required.                     |
+| **Stubbed payment gateways**                                                | Keeps repository runnable without secrets; demonstrates Strategy pattern.                         | Not production-ready; no real PSP error scenarios.                               |
+| **Single bounded context** (monolith)                                       | Fast to develop and demo; easier local Docker stack.                                              | Limits horizontal scaling; harder to split later than starting modular.          |
 | **No Outbox yet**                                                           | Reduces code for the demo                           | At-least-once guarantees require Outbox when moving to multi-service deployment. |
-| **Static mapping instead of AutoMapper**                                    | Compile-time safety; zero reflection at runtime.                                                  | More manual code if DTOs explode; less flexible for deep graphs. |
-| **Docker Compose stack**                                                    | 1-command onboarding; CI-friendly.                                                                | No orchestration; prod would need Kubernetes / ECS. |
+| **Static mapping instead of AutoMapper**                                    | Compile-time safety; zero reflection at runtime.                                                  | More manual code if DTOs explode; less flexible for deep graphs.                 |
+| **Docker Compose stack**                                                    | 1-command onboarding; CI-friendly.                                                                | No orchestration; prod would need Kubernetes / ECS.                              |
 
 ---
 
@@ -137,7 +136,7 @@ Only the transitions above are accepted by the domain model; any other attempt r
 
 ```
 src/
-├─ OMS.Api ← HTTP endpoints & composition root
+├─ OMS.Api ← HTTP endpoints
 ├─ OMS.Application ← Services, validators, business logic
 ├─ OMS.Domain ← Entities, enums
 ├─ OMS.Infrastructure
@@ -210,10 +209,9 @@ Environment variables (see docker-compose.yml) control connection strings & JWT 
 - Caching hot endpoints with Redis
 - Centralised logging / metrics via Grafana + Prometheus
 - Rate limiting using ASP.NET middleware
-- Health checks & readiness probes for K8s
-- Auto-assignment algorithm for couriers (distance ETA)
+- Health checks
 - CI pipeline (GitHub Actions) building Docker images & running tests
-- User-facing notifications, updates when orders change status
+- User-facing notifications and emails, updates when orders change status, send receipt
 - Retry / circuit-breaker policies (Polly)
 - Reliable messaging with the Outbox pattern
 - Domain event publishing to external systems
