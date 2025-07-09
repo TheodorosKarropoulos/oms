@@ -61,7 +61,9 @@ API  (ASP.NET)
 * **Dependency Rule:** outer layers depend on inner ones—never the reverse.
 * **Auditing Interceptor:** `CreatedAtUtc` / `UpdatedAtUtc` stamped automatically on every auditable entity.
 
-See `docs/architecture.drawio` for the full component & sequence diagrams.
+
+![Architecture](docs/architecture.drawio.png)
+
 
 ### 3.1 Architectural Explanation & Trade-Offs
 
@@ -112,7 +114,8 @@ See `docs/architecture.drawio` for the full component & sequence diagrams.
 * **API persists the order**  
    *Order Service* inserts the `Order` row (status =`Paid`) inside a SQL transaction and returns **`201 Created`** with the new `orderId`.
 
-See `docs/order_lifecycle.drawio` for the full component & sequence diagrams.
+![Order Lifecycle](docs/order_lifecycle.drawio.png)
+
 
 ### 5.2 Order Status Valid Transitions
 
@@ -127,7 +130,7 @@ See `docs/order_lifecycle.drawio` for the full component & sequence diagrams.
 
 Only the transitions above are accepted by the domain model; any other attempt raises a `InvalidOrderStateException`.
 
-> Visual reference → open [`docs/order_status_transitions.drawio`](docs/order_status_transitions.drawio).
+![Order Status Transitions](docs/order_status_transitions.png)
 
 ---
 
